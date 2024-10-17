@@ -1,0 +1,112 @@
+:root {
+  --color-primary: #0066ff;
+  --color-primary-hover: #0056b3;
+  --color-secondary: #6c757d;
+  --color-secondary-hover: #5a6268;
+  --color-white: #ffffff;
+  --color-gray: #f9f9f9;
+  --color-dark: #333;
+}
+
+.home {
+  padding: 20px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.home h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.home button {
+  margin: 10px 0;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.home .btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.home .btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.home h2 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.prompt-text {
+  text-align: center;
+  color: var(--color-secondary);
+  font-size: 1.5rem;
+  margin-top: 40px;
+  margin-bottom: 60px;
+}
+
+.home ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.home ul li {
+  margin-bottom: 10px;
+}
+
+.home ul li a {
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.home ul li a:hover {
+  text-decoration: underline;
+}
+
+.user-picture {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.user-info {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@media (min-width: 768px) {
+  .home h1 {
+    font-size: 2.5rem;
+  }
+
+  .home h2 {
+    font-size: 1.75rem;
+  }
+
+  .home button {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 992px) {
+  .home h1 {
+    font-size: 3rem;
+  }
+
+  .home h2 {
+    font-size: 2rem;
+  }
+
+  .home button {
+    font-size: 20px;
+  }
+}

@@ -1,0 +1,1 @@
+export const requestedScopes = ["openid", "profile", "email"];

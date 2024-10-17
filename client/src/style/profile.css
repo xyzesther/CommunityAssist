@@ -1,0 +1,123 @@
+:root {
+  --primary-color: #0066ff;
+  --secondary-color: #6c757d;
+  --background-color: #f9f9f9;
+  --text-color: #333;
+  --card-background: #fff;
+  --card-border: #ddd;
+  --card-shadow: rgba(0, 0, 0, 0.1);
+}
+
+body {
+  background-color: var(--background-color);
+  margin: 20px;
+  padding: 20px;
+}
+
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--background-color);
+  gap: 20px;
+  max-width: 1200px;
+}
+
+.profile-card {
+  background-color: var(--card-background);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  box-shadow: 0 0 20px var(--card-shadow);
+  padding: 20px;
+  max-width: 400px;
+  text-align: center;
+}
+
+.profile-avatar {
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 5px;
+  object-fit: cover;
+}
+
+.profile-name {
+  font-size: 1.5em;
+  color: var(--text-color);
+  margin: 10px 0;
+}
+
+.profile-email,
+.profile-id,
+.profile-verified {
+  font-size: 1em;
+  color: var(--secondary-color);
+  margin: 5px 0;
+}
+
+input[type="text"],
+input[type="email"] {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  color: var(--text-color);
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder {
+  color: #999;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.profile-update-button {
+  width: 100%;
+  padding: 10px 15px;
+  margin-top: 15px;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.profile-update-button:hover {
+  background-color: #0056b3;
+}
+
+.profile-update-button:disabled {
+  background-color: var(--secondary-color);
+  cursor: not-allowed;
+}
+
+.profile-card p.message {
+  margin-top: 15px;
+  font-size: 1em;
+}
+
+.profile-card p.message.success {
+  color: rgb(38, 141, 38);
+}
+
+.profile-card p.message.error {
+  color: rgb(237, 38, 38);
+}
+
+.profile-appointments, .profile-requests {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
