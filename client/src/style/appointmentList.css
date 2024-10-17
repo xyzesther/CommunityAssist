@@ -1,0 +1,120 @@
+:root {
+  --color-primary: #0066ff;
+  --color-primary-dark: #0056b3;
+  --color-secondary: #6c757d;
+  --color-white: #ffffff;
+  --color-gray: #f9f9f9;
+  --color-dark: #333;
+}
+
+body {
+  font-family: "Gill Sans", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-gray);
+  color: var(--color-dark);
+  padding-top: auto;
+}
+
+.appointment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+}
+
+.appointment-card {
+  background-color: var(--color-white);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px;
+  flex-direction: column;
+  flex: 1 1 300px;
+  position: relative;
+}
+
+.appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.appointment-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.appointment-info {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.appointment-info p, .request-info p {
+  margin: 4px 0;
+  font-size: 0.9em;
+  color: #777;
+  text-align: left;
+}
+
+.appointment-info .appointment-time{
+  font-weight: medium;
+  color: var(--color-dark);
+}
+
+.divider {
+  border-top: 1px solid #ddd;
+  margin: 8px 0;
+}
+
+.prompt-text {
+  text-align: center;
+  color: var(--color-secondary);
+}
+
+.cancel-appointment-button {
+  font-size: 0.9em;
+  margin-left: 10px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.cancel-appointment-button:hover {
+  color: var(--color-primary-dark);
+  background-color: transparent;
+}
+
+@media (min-width: 550px) {
+  .appointment-list {
+    justify-content: flex-start;
+  }
+  .appointment-card {
+    flex-basis: calc(49.5% - 32px);
+  }
+}
+
+@media (min-width: 800px) {
+  .appointment-list {
+    justify-content: flex-start;
+  }
+  .appointment-card {
+    flex-basis: calc(32.5% - 32px); 
+  }
+}

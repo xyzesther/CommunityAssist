@@ -1,0 +1,28 @@
+.auth-debugger-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 20px;
+  overflow-x: auto;
+}
+
+.auth-debugger-container pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+.auth-debugger-container button {
+  padding: 10px 20px;
+  background-color: #0066ff;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.auth-debugger-container button:hover {
+  background-color: #0056b3;
+}
