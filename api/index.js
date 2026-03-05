@@ -5,15 +5,45 @@ import pkg from "@prisma/client";
 import morgan from "morgan";
 import cors from "cors";
 import { auth } from "express-oauth2-jwt-bearer";
+import {
+  cacheDel,
+  cacheGetJson,
+  cacheMetrics,
+  cacheSetJson,
+  computeHitRate,
+  initRedis,
+  isRedisReady,
+} from "./redisCache.js";
 
-// this is a middleware that will validate the access token sent by the client
-const requireAuth = auth({
-  audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: process.env.AUTH0_ISSUER,
-  tokenSigningAlg: "RS256",
-});
+const authAudience = process.env.AUTH0_AUDIENCE;
+const authIssuerBaseURL = process.env.AUTH0_ISSUER;
+const authEnabled = Boolean(authAudience && authIssuerBaseURL);
+
+if (!authEnabled) {
+  console.warn(
+    "[auth] AUTH0_AUDIENCE/AUTH0_ISSUER not set; protected endpoints will return 503."
+  );
+}
+
+// Middleware that validates access tokens from the client.
+// If Auth0 env vars are missing, do NOT crash the process; instead, protected routes return 503 with guidance.
+const requireAuth = authEnabled
+  ? auth({
+      audience: authAudience,
+      issuerBaseURL: authIssuerBaseURL,
+      tokenSigningAlg: "RS256",
+    })
+  : (req, res, next) => {
+      res.status(503).json({
+        error: "Auth0 is not configured for this environment.",
+        hint: "Set AUTH0_AUDIENCE and AUTH0_ISSUER to enable protected endpoints.",
+      });
+    };
 
 const app = express();
+
+// Disable Express ETag to avoid browser-driven 304 responses hiding cache behavior during testing.
+app.set("etag", false);
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
@@ -23,9 +53,37 @@ app.use(morgan("dev"));
 const { PrismaClient, RequestStatus, AppointmentStatus } = pkg;
 const prisma = new PrismaClient();
 
+// Best-effort Redis init (non-fatal if unavailable)
+await initRedis();
+
 // this is a public endpoint because it doesn't have the requireAuth middleware
 app.get("/ping", (req, res) => {
   res.send("pong");
+});
+
+app.get("/health", async (req, res) => {
+  const health = {
+    ok: true,
+    redis: { ok: isRedisReady() },
+    db: { ok: false },
+  };
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    health.db.ok = true;
+  } catch {
+    health.ok = false;
+    health.db.ok = false;
+  }
+
+  res.status(health.ok ? 200 : 503).json(health);
+});
+
+app.get("/metrics/cache", (req, res) => {
+  res.json({
+    ...cacheMetrics,
+    hitRate: computeHitRate(),
+  });
 });
 
 // this endpoint is used by the client to verify the user status and to make sure the user is registered in our database once they signup with Auth0
@@ -123,18 +181,31 @@ app.post("/requests", requireAuth, async (req, res) => {
       userId: user.id
     },
   });
+  await cacheDel(["requests:all:v1"]);
   res.status(201).json(newRequest);
 
 });
 
 // Get: return all requests
 app.get("/requests", async (req, res) => {
+  const cacheKey = "requests:all:v1";
+
   try {
+    const cached = await cacheGetJson(cacheKey);
+    if (cached) {
+      cacheMetrics.hits += 1;
+      res.setHeader("X-Cache", "HIT");
+      return res.json(cached);
+    }
+    cacheMetrics.misses += 1;
+
     const requests = await prisma.request.findMany({
       include: {
         user: true
       }
     });
+    res.setHeader("X-Cache", "MISS");
+    await cacheSetJson(cacheKey, requests, { ttlSeconds: 60 });
     res.json(requests);
   } catch (error) {
     console.error("Error fetching requests:", error);
@@ -161,14 +232,29 @@ app.get("/requests/user", requireAuth, async (req, res) => {
      
 // Get: return a request by id
 app.get("/requests/:id", async (req, res) => {
+  const { id } = req.params;
+  const requestId = parseInt(id);
+  const cacheKey = `requests:${requestId}:v1`;
+
   try {
-    const { id } = req.params;
+    const cached = await cacheGetJson(cacheKey);
+    if (cached) {
+      cacheMetrics.hits += 1;
+      res.setHeader("X-Cache", "HIT");
+      return res.json(cached);
+    }
+    cacheMetrics.misses += 1;
+
     const request = await prisma.request.findUnique({
-      where: { requestId: parseInt(id) },
+      where: { requestId },
       include: {
           user: true
       }
     });
+    res.setHeader("X-Cache", "MISS");
+    if (request) {
+      await cacheSetJson(cacheKey, request, { ttlSeconds: 60 });
+    }
     res.json(request);
   } catch (error) {
     console.error("Error fetching the request by id:", error);
@@ -179,20 +265,22 @@ app.get("/requests/:id", async (req, res) => {
 // PUT: update a request by id
 app.put("/requests/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
+  const requestId = parseInt(id);
   const { title, description, status } = req.body;
 
   try {
     const updatedRequest = await prisma.request.update({
-      where: { requestId: parseInt(id) },
+      where: { requestId },
       data: { title, description, status },
     });
 
     if (status === 'COMPLETED') {
       await prisma.appointment.updateMany({
-        where: { requestId: parseInt(id) },
+        where: { requestId },
         data: { status: AppointmentStatus.COMPLETED },
       });
     }
+    await cacheDel(["requests:all:v1", `requests:${requestId}:v1`]);
     res.json(updatedRequest);
   } catch (error) {
     console.error("Error updating the request:", error);
@@ -203,11 +291,13 @@ app.put("/requests/:id", requireAuth, async (req, res) => {
 // Delete: delete a request by id
 app.delete("/requests/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
+  const requestId = parseInt(id);
 
   try {
     await prisma.request.delete({
-      where: { requestId: parseInt(id) },
+      where: { requestId },
     });
+    await cacheDel(["requests:all:v1", `requests:${requestId}:v1`]);
     res.sendStatus(204);
   } catch (error) {
     if (error.code === 'P2003') { // Foreign key constraint error code
@@ -257,6 +347,7 @@ app.post("/appointments", requireAuth, async (req, res) => {
       data: { status: RequestStatus.IN_PROGRESS },
     });
 
+    await cacheDel(["requests:all:v1", `requests:${parseInt(requestId)}:v1`]);
     res.status(201).json(newAppointment);
   } catch (error) {
     console.error('Error creating appointment:', error);
@@ -359,6 +450,7 @@ app.put("/appointments/:id", requireAuth, async (req, res) => {
         });
       }
     }
+    await cacheDel(["requests:all:v1", `requests:${existingAppointment.requestId}:v1`]);
     res.json(updatedAppointment);
   } catch (error) {
     console.error('Error updating appointment:', error);
@@ -371,9 +463,23 @@ app.delete("/appointments/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   
   try {
+    const existingAppointment = await prisma.appointment.findUnique({
+      where: { appointmentId: parseInt(id) },
+    });
+
     await prisma.appointment.delete({
       where: { appointmentId: parseInt(id) },
     });
+
+    if (existingAppointment) {
+      await cacheDel([
+        "requests:all:v1",
+        `requests:${existingAppointment.requestId}:v1`,
+      ]);
+    } else {
+      await cacheDel(["requests:all:v1"]);
+    }
+
     res.sendStatus(204);
   } catch (error) {
     console.error('Error deleting appointment:', error);

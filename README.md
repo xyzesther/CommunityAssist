@@ -1,65 +1,104 @@
-# Full-Stack Web Application for Requests & Appointments
+## Community Assistance Platform
 
-This project is a full-stack web application built to manage user requests and appointments, with authentication and authorization features. It leverages **React** for the front-end and **Node.js** with **Express** and **Prisma** for the back-end, with **PostgreSQL** as the database. User authentication and authorization are handled securely using **Auth0**.
+A cloud-native, containerized full-stack platform that connects community volunteers with individuals requesting assistance.
+It supports request management and appointment scheduling with a scalable backend foundation (PostgreSQL + Redis).
 
-## Features
+### Architecture
 
-- **User Authentication & Authorization**: Secure login, logout, and protected routes using **Auth0**.
-- **Request Management**: Users can create, view, update, and delete requests, with appointment association.
-- **Appointment Management**: Users can make appointments tied to requests, view upcoming appointments, and manage status updates.
-- **Data Persistence**: The back-end uses **Prisma ORM** to interact with a **PostgreSQL** database, ensuring efficient data handling and validation.
-- **API Integration**: RESTful APIs manage user data, requests, and appointments with robust error handling and data flow validation.
-- **Deployment**: The application is deployed on **Render** (back-end) and **Vercel** (front-end) with seamless CORS configuration.
+This project is a **containerized “modular monolith”** deployed with Docker Compose:
 
-## Technologies Used
+- **`web`**: Nginx serving the React build + reverse-proxying `/api/*` to the Node API
+- **`api`**: Node.js + Express + Prisma API
+- **`postgres`**: PostgreSQL database
+- **`redis`**: Redis cache layer for hot reads
 
-### Front-End
-- **React**
-- **CSS** for styling
+### Tech stack
 
-### Back-End
-- **Node.js** with **Express**
-- **Prisma** ORM
-- **PostgreSQL** for data storage
+- **Frontend**: React (CRA), Auth0
+- **Backend**: Node.js, Express.js, Prisma ORM, PostgreSQL, Redis
+- **Infra**: Docker, Docker Compose, Nginx
+- **Automation**: GitHub Actions (CI + deploy)
+- **Cloud**: AWS EC2 deployment path (docs included)
 
-### Authentication & Authorization
-- **Auth0** for secure authentication
+### Key features
 
-### Deployment
-- **Render** (back-end)
-- **Vercel** (front-end)
+- **User management**: Auth0-protected routes + user verification/registration in Postgres
+- **Request management**: create/update/delete + lifecycle \(OPEN → IN_PROGRESS → COMPLETED\)
+- **Appointment scheduling**: one active appointment per request; request status updates on appointment actions
+- **Redis caching**: caches high-frequency read endpoints with TTL + invalidation on writes
+- **Health + metrics**: `/health` and `/metrics/cache` on the API
 
-## API Endpoints
+### API overview
 
-### Authentication
-- **POST** `/verify-user`: Verifies or registers a user in the database.
-  
-### User
-- **GET** `/user`: Fetches authenticated user's information.
-- **PUT** `/user`: Updates authenticated user's information.
+- **Health**
+  - `GET /health`
+  - `GET /metrics/cache`
+- **Auth**
+  - `POST /verify-user`
+- **User**
+  - `GET /user`
+  - `PUT /user`
+- **Requests**
+  - `POST /requests`
+  - `GET /requests` *(cached)*
+  - `GET /requests/user`
+  - `GET /requests/:id` *(cached)*
+  - `PUT /requests/:id`
+  - `DELETE /requests/:id`
+- **Appointments**
+  - `POST /appointments`
+  - `GET /appointments`
+  - `GET /appointments/user`
+  - `GET /appointments/:id`
+  - `PUT /appointments/:id`
+  - `DELETE /appointments/:id`
 
-### Requests
-- **POST** `/requests`: Creates a new request.
-- **GET** `/requests`: Retrieves all requests.
-- **GET** `/requests/user`: Retrieves requests by a user.
-- **GET** `/requests/:id`: Retrieves a request by its ID.
-- **PUT** `/requests/:id`: Updates a request.
-- **DELETE** `/requests/:id`: Deletes a request.
+### Redis caching strategy
 
-### Appointments
-- **POST** `/appointments`: Creates a new appointment.
-- **GET** `/appointments`: Retrieves all appointments.
-- **GET** `/appointments/user`: Retrieves appointments by a user.
-- **GET** `/appointments/:id`: Retrieves an appointment by its ID.
-- **PUT** `/appointments/:id`: Updates an appointment.
-- **DELETE** `/appointments/:id`: Deletes an appointment.
+The API caches:
 
-## Deployment
+- `GET /requests` → key `requests:all:v1` \(TTL: 60s\)
+- `GET /requests/:id` → key `requests:<id>:v1` \(TTL: 60s\)
 
-The application is deployed as follows:
-- **Front-end**: Deployed on **Vercel**.
-- **Back-end**: Deployed on **Render**.
+Writes invalidate cache keys (requests + appointment actions that affect request status).
+Responses include **`X-Cache: HIT|MISS`** and `/metrics/cache` exposes hits/misses/invalidations + hit rate.
 
-## Contributing
+### Run locally (Docker)
 
-Feel free to submit issues and pull requests for improvement. Please follow standard [GitHub flow](https://guides.github.com/introduction/flow/) for contributions.
+Prerequisites:
+
+- Docker Desktop (Docker daemon must be running)
+
+Setup:
+
+- Copy env file:
+  - `cp .env.example .env`
+  - Fill in Auth0 values if you want to use protected endpoints in the UI
+
+Start:
+
+- `docker compose up --build`
+
+Open:
+
+- **Frontend**: `http://localhost:3000`
+- **API (direct)**: `http://localhost:8080`
+- **API (via Nginx)**: `http://localhost:3000/api`
+
+### AWS deployment
+
+See `infra/aws-ec2.md` for an EC2 + Docker Compose deployment path and HTTPS options (recommended: **ACM + ALB**).
+
+### CI/CD
+
+GitHub Actions workflows:
+
+- **CI**: `.github/workflows/ci.yml` (client tests, API checks, Docker builds)
+- **Deploy**: `.github/workflows/deploy.yml` (SSH to EC2, `docker compose up -d --build`)
+
+### Project structure
+
+- `api/`: Express + Prisma API
+- `client/`: React app
+- `infra/`: Nginx config + prod compose + AWS deployment docs
+- `.github/workflows/`: CI/CD workflows
