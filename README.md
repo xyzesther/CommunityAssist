@@ -19,19 +19,19 @@ flowchart TD
     API --> Postgres[(PostgreSQL Database)]
     API --> Auth0[Auth0 JWT Validation]
 
-    subgraph AWS_Cloud[AWS Cloud (EC2)]
+    subgraph AWS_Cloud["AWS Cloud - EC2"]
         Nginx
         API
         Redis
         Postgres
     end
 
-    subgraph CICD[CI/CD]
+    subgraph CICD["CI/CD"]
         GitHub[GitHub Repository] --> Actions[GitHub Actions]
-        Actions --> EC2[EC2 Deploy (Docker Compose)]
+        Actions --> EC2Deploy[EC2 Deploy - Docker Compose]
     end
 
-    EC2 --> Nginx
+    EC2Deploy --> Nginx
 ```
 
 Docker Compose services:
