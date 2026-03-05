@@ -5,15 +5,15 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test": "node --check index.js",
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:dbpush": "prisma db push"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "prisma": "^5.17.0"
-  },
+  "devDependencies": {},
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
     "@prisma/client": "^5.17.0",
@@ -21,9 +21,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
-    "express-oauth2-jwt-bearer": "^1.6.0",
-    "morgan": "^1.10.0"
-  },
-  "preinstall": "npm i -D prisma",
-  "postinstall": "npx prisma db push"
+    "express-oauth2-jwt-bearer": "^1.7.4",
+    "morgan": "^1.10.0",
+    "prisma": "^5.17.0",
+    "redis": "^4.7.1"
+  }
 }
