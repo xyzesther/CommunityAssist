@@ -4,6 +4,10 @@ node_modules
 # local env files
 .env
 
+# AWS key pairs
+*.pem
+*.key
+
 # macOS
 .DS_Store
 
