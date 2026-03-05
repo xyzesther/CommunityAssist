@@ -13,17 +13,18 @@
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
+  "devDependencies": {
+    "prisma": "^6.19.2"
+  },
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
-    "@prisma/client": "^5.17.0",
+    "@prisma/client": "^6.19.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
     "express-oauth2-jwt-bearer": "^1.7.4",
     "morgan": "^1.10.0",
-    "prisma": "^5.17.0",
     "redis": "^4.7.1"
   }
 }
