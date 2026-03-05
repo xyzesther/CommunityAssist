@@ -10,36 +10,28 @@ It supports request management and appointment scheduling with a scalable backen
 This project is a **containerized modular monolith** deployed with Docker Compose on AWS EC2.
 
 ```mermaid
-graph TD
-    subgraph Client
-        Browser["Browser"]
+flowchart TD
+    User[Client / Browser] --> Frontend[React Frontend]
+    Frontend --> Nginx[Nginx Reverse Proxy]
+    Nginx --> API[Node.js Express API]
+
+    API --> Redis[(Redis Cache)]
+    API --> Postgres[(PostgreSQL Database)]
+    API --> Auth0[Auth0 JWT Validation]
+
+    subgraph AWS_Cloud[AWS Cloud (EC2)]
+        Nginx
+        API
+        Redis
+        Postgres
     end
 
-    subgraph Auth0_External["Auth0 (External)"]
-        A0["Auth0 Tenant"]
+    subgraph CICD[CI/CD]
+        GitHub[GitHub Repository] --> Actions[GitHub Actions]
+        Actions --> EC2[EC2 Deploy (Docker Compose)]
     end
 
-    subgraph DockerCompose["Docker Compose (EC2)"]
-        WEB["web — Nginx :80\nServes React SPA\nProxies /api/* to api:8080"]
-        API["api — Node.js + Express :8080\nPrisma ORM / JWT validation"]
-        PG["postgres — PostgreSQL :5432"]
-        RD["redis — Redis :6379\n60s TTL / X-Cache: HIT or MISS"]
-    end
-
-    subgraph CICD["GitHub Actions"]
-        GH["Push to master\nCI: test + Docker build\nDeploy: SSH to EC2"]
-    end
-
-    Browser -->|"GET / React SPA"| WEB
-    Browser -->|"GET /api/requests"| WEB
-    Browser -->|"Login"| A0
-    A0 -->|"JWT token"| Browser
-    WEB -->|"proxy /api/*"| API
-    API -->|"verify JWT"| A0
-    API -->|"cache lookup"| RD
-    RD -->|"HIT: cached / MISS: query DB"| API
-    API -->|"read / write"| PG
-    GH -.->|"deploy"| DockerCompose
+    EC2 --> Nginx
 ```
 
 Docker Compose services:
