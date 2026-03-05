@@ -3,10 +3,10 @@ name: Deploy (EC2 + Docker Compose)
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["master"]
 
 concurrency:
-  group: deploy-main
+  group: deploy-master
   cancel-in-progress: true
 
 jobs:
